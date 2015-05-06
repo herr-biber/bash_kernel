@@ -147,4 +147,41 @@ class BashKernel(Kernel):
                 'cursor_end': cursor_pos, 'metadata': dict(),
                 'status': 'ok'}
 
+    def do_inspect(self, code, cursor_pos, detail_level=0):
+        default = {
+            'status': 'ok',
+            'data': dict(),
+            'metadata': dict(),
+        }
+    
+        code = code.replace(':', ' ')
+        
+        # extract token under cursor
+        # no left space: -1 + 1 = 0
+        # left space: skip its width
+        left_pos = code.rfind(' ', 0, cursor_pos) + 1
+        right_pos = code.find(' ', cursor_pos)
+        if right_pos == -1:
+            right_pos = len(code)
+        token = code[left_pos:right_pos]
+        
+        if not token:
+            return default
+        
+        # only variable introspection by now
+        if token[0] != '$':
+            return default
 
+        cmd = 'echo %s' % token
+        output = self.bashwrapper.run_command(cmd).rstrip()
+        if not output:
+            return default
+        
+        return {
+            'status': 'ok',
+            'data': {
+                'text/plain': output,
+            },
+            'metadata': dict(),
+            'found': True # need this (undocumented)
+        }
