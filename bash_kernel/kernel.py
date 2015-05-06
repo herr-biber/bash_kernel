@@ -168,12 +168,16 @@ class BashKernel(Kernel):
         if not token:
             return default
         
-        # only variable introspection by now
-        if token[0] != '$':
-            return default
-
-        cmd = 'echo %s' % token
-        output = self.bashwrapper.run_command(cmd).rstrip()
+        
+        if token[0] == '$':
+            # variable introspection
+            cmd = 'echo %s' % token
+            output = self.bashwrapper.run_command(cmd).strip()
+        else:
+            # man page
+            cmd = 'man %s | cat' % token
+            output = self.bashwrapper.run_command(cmd).strip()
+            
         if not output:
             return default
         
